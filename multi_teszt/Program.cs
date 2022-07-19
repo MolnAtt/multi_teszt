@@ -10,89 +10,160 @@ namespace multi_teszt
 	{
 		static void Main(string[] args)
 		{
-			Jatekos karesz = new Jatekos("Karesz");
-			Jatekos lilesz = new Jatekos("Lilesz");
-			Metronom m = new Metronom();
+			Robot defaultkaresz = new Robot("DefaultKaresz");
+			Robot karesz = new Robot("Karesz");
+			Robot lilesz = new Robot("Lilesz");
 
-			foreach (Jatekos jatekos in Jatekos.lista)
-			{
-				jatekos.thread.Start();
-			}
-
-			m.Start(20);
-		}
-		static void Karesz_folyamata() => Jatekos.lista[0].Folyamat();
-		static void Lilesz_folyamata() => Jatekos.lista[1].Folyamat();
-	}
-
-	class Metronom
-	{
-		int szamlalo = 0;
-
-		public void UjKor()
-		{
-			foreach (Jatekos jatekos in Jatekos.lista)
-				if (!jatekos.kész)
-					jatekos.Ujraindit();
-			Console.WriteLine($"{szamlalo++}. kör vége");
-		}
-
-		public void Start(int meddig)
-		{
-			for (int i = 0; i < meddig; i++)
-				UjKor();
+			Robot.játék_elindítása();
 		}
 	}
 
-	class Jatekos
+
+
+	class Robot
 	{
 		// instancia tulajdonságai
 		public string nev;
 		public Thread thread;
 		private int meddig;
+
+		public Robot rákövetkezője, megelőzője;
 		public bool kész;
 		public bool vár;
+
+		// string-reprezentáció debughoz
+		public override string ToString() => this.nev;
+
 		// osztály tulajdonságai
-		public static List<Jatekos> lista = new List<Jatekos>();
-		
 		public static Random r = new Random();
+		private static Robot kezdő_robot;
 
 		// konstruktor
-		public Jatekos(string nev)
+		public Robot(string nev)
 		{
 			this.nev = nev;
-			this.thread = new Thread(new ThreadStart(Folyamat));
+			this.thread = new Thread(new ThreadStart(FELADAT_BUROK));
 			this.meddig = r.Next(10,20);
+			this.kész = false;
+			this.vár = false;
 
-			lista.Add(this);
-			kész = false;
+			if (kezdő_robot == null)
+				kezdő_robot = this;
+
+			Végére_fűz();
 
 			Console.WriteLine($"{nev} létrejött, és {meddig}-ig fog elszámolni.");
 		}
 
-		// metódusok
-		public void Folyamat()
-		{
-			for (int i = 0; i < meddig; i++)
-				Lep();
+		#region A lánc adatszerkezet metódusai
 
+		public void Beszúr_ez_elé(Robot ez)
+		{
+			this.rákövetkezője = ez;
+			this.megelőzője = ez.megelőzője;
+			this.rákövetkezője.megelőzője = this;
+			this.megelőzője.rákövetkezője = this;
+		}
+		/// <summary>
+		/// ha már csak egyelemű a lista, akkor hatástalan.
+		/// </summary>
+		public void Kifűz()
+		{
+			this.rákövetkezője.megelőzője = this.megelőzője;
+			this.megelőzője.rákövetkezője = this.rákövetkezője;
+		}
+		public void Végére_fűz() => Beszúr_ez_elé(kezdő_robot);
+
+		#endregion
+
+		#region A robot kezelésének metódusai
+		/// <summary>
+		/// ez az, amit futtat majd a thread
+		/// </summary>
+		void FELADAT_BUROK()
+		{
+			FELADAT();
 			kész = true;
 		}
-
-		public void Ujraindit() 
+		/// <summary>
+		/// ez az, amit a user szerkeszt
+		/// </summary>
+		void FELADAT()
 		{
-			thread.Resume();
+			for (int i = 0; i < meddig; i++)
+				Csinál_valamit(); // ide jönnek az olyan parancsok, mint a tegyél le egy követ meg a lépj...
 		}
-		public void Megall() 
-		{
-			thread.Suspend();
-		}
-		public void Lep()
+		void Csinál_valamit()
 		{
 			Console.WriteLine($"{nev} lép.");
-			Megall();
-			vár = true;
-			
+			Letelt_a_köröd();
 		}
+
+		#endregion
+
+		#region A láncba fűzött szálak indítgatásának metódusai
+		/// <summary>
+		/// a játékosok láncán elkezd végighaladni a léptetés. 
+		/// Aki kész van, kiesik a láncból. 
+		/// Addig megy, míg mindenki kész nem lesz. 
+		/// </summary>
+		public static void játék_elindítása()
+		{
+			kezdő_robot.Te_jössz();
+			Várakozik_amig_mindenki_kesz_nem_lesz();
+			Console.WriteLine("Vége, mindenki lelépett mindent.");
+		}
+
+		static void Várakozik_amig_mindenki_kesz_nem_lesz()
+		{
+			while (Valaki_még_dolgozik())
+				Thread.Sleep(1000);
+		}
+
+		static bool Valaki_még_dolgozik()
+		{
+			if (!kezdő_robot.kész)
+			{
+				Console.WriteLine($"{kezdő_robot} még dolgozik");
+				return true;
+			}
+			Robot aktuális_robot = kezdő_robot.rákövetkezője;
+			while (aktuális_robot != kezdő_robot)
+			{
+				if (!aktuális_robot.kész)
+				{
+					Console.WriteLine($"{aktuális_robot} még dolgozik");
+					return true;
+				}
+				aktuális_robot = aktuális_robot.rákövetkezője;
+			}
+			Console.WriteLine("Mindenki készen van.");
+			return false;
+		}
+
+		void Te_jössz()
+		{
+			if (!kész)
+				Start_or_Resume();
+		}
+		void Letelt_a_köröd() 
+		{
+			thread.Suspend();
+			vár = true;
+			rákövetkezője.Te_jössz();
+		}
+		void Start_or_Resume()
+		{
+			if (vár)
+				thread.Resume();
+			else
+				thread.Start();
+		}
+
+		#endregion
+
+		// metódusok
+
+
 	}
 }

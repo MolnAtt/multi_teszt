@@ -22,7 +22,6 @@ namespace multi_teszt
 	}
 
 
-
 	class Robot
 	{
 		// instancia tulajdonságai
@@ -41,9 +40,9 @@ namespace multi_teszt
 		public static Random r = new Random();
 		private static Robot kezdő_robot;
 
-		static readonly int rmin = 10;
-		static readonly int rmax = 20;
-		static readonly int timeout = 40;
+		static readonly int rmin = 3;
+		static readonly int rmax = 10;
+		static readonly int timeout = 31;
 		static int counter = 0;
 
 		// konstruktor
@@ -123,6 +122,8 @@ namespace multi_teszt
 		public static void játék_elindítása()
 		{
 			counter = 0;
+			Console.WriteLine("Nyomj egy gombot a kezdéshez!");
+			Console.ReadKey();
 			kezdő_robot.Te_jössz();
 			Várakozik_amig_mindenki_kesz_nem_lesz();
 			Console.WriteLine("JÁTÉKMESTER: Vége, mindenki lelépett mindent, vagy lejárt az idő.");
@@ -137,11 +138,11 @@ namespace multi_teszt
 			}
 			if (counter < timeout)
 			{
-				Console.WriteLine($"JÁTÉKMESTER: elérte a counter ({counter}) a timeout-ot ({timeout})");
+				Console.WriteLine($"JÁTÉKMESTER: már nem dolgozik senki");
 			}
 			else
 			{
-				Console.WriteLine($"JÁTÉKMESTER: már nem dolgozik senki");
+				Console.WriteLine($"JÁTÉKMESTER: elérte a counter ({counter}) a timeout-ot ({timeout})");
 			}
 		}
 
@@ -181,8 +182,12 @@ namespace multi_teszt
 			vár = true;
 			Console.WriteLine($"{nev}: várakozom, mindjárt felfüggesztem magam, de előbb szólok {rákövetkezője}-nek, hogy ő jön.");
 			rákövetkezője.Te_jössz();
+
 			Console.WriteLine($"{nev}: és most felfüggesztem magam");
-			thread.Suspend();
+			this.thread.Suspend();
+
+			// valójában itt kezdődnek a körök!
+			Thread.Sleep(100); // Ez arra kell, hogy amikor megkapja a körét, akkor hagyjon egy kis időt az előzőnek, hogy felfüggessze magát. 
 		}
 		void Start_or_Resume()
 		{

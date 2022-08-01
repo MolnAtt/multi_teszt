@@ -10,9 +10,10 @@ namespace multi_teszt
 	{
 		static void Main(string[] args)
 		{
-			Robot defaultkaresz = new Robot("DefaultKaresz", 3);
-			Robot karesz = new Robot("Karesz", 6);
-			Robot lilesz = new Robot("Lilesz", 8);
+//			Robot defaultkaresz = new Robot("DefaultKaresz", 1);
+			Robot karesz = new Robot("Karesz", 1);
+			Robot lilesz = new Robot("Lilesz", 2);
+			Robot.timeout = 6;
 
 			Console.WriteLine("-------------------------------------------------------");
 			Console.WriteLine($"JÁTÉKMESTER: elindítom a játékot");
@@ -42,7 +43,7 @@ namespace multi_teszt
 
 		static readonly int rmin = 3;
 		static readonly int rmax = 10;
-		static readonly int timeout = 31;
+		public static int timeout;
 		static int counter = 0;
 
 		// konstruktor
@@ -92,7 +93,8 @@ namespace multi_teszt
 		{
 			FELADAT();
 			kész = true;
-			Console.WriteLine($"{nev}: KÉSZEN VAGYOK! Lépek.");
+			Console.WriteLine($"{nev}: KÉSZEN VAGYOK! ({meddig}/{meddig}) Lépek.");
+			rákövetkezője.Te_jössz();
 		}
 		/// <summary>
 		/// ez az, amit a user szerkeszt
@@ -134,7 +136,8 @@ namespace multi_teszt
 		{
 			while (Valaki_még_dolgozik() && counter<timeout)
 			{
-				Console.WriteLine($"JÁTÉKMESTER: körbenézek, mi van. ({++counter})");
+				counter++;
+			//	Console.WriteLine($"JÁTÉKMESTER: körbenézek, mi van. ({++counter})");
 				Thread.Sleep(1000);
 			}
 			if (counter < timeout)

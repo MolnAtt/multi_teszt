@@ -10,10 +10,10 @@ namespace multi_teszt
 	{
 		static void Main(string[] args)
 		{
-//			Robot defaultkaresz = new Robot("DefaultKaresz", 1);
-			Robot karesz = new Robot("Karesz", 1);
-			Robot lilesz = new Robot("Lilesz", 2);
-			Robot.timeout = 6;
+			Robot defaultkaresz = new Robot("DefaultKaresz", 1);
+			Robot karesz = new Robot("Karesz", 3);
+			Robot lilesz = new Robot("Lilesz", 6);
+			Robot.timeout = 10;
 
 			Console.WriteLine("-------------------------------------------------------");
 			Console.WriteLine($"JÁTÉKMESTER: elindítom a játékot");
@@ -33,6 +33,8 @@ namespace multi_teszt
 		public Robot rákövetkezője, megelőzője;
 		public bool kész;
 		public bool vár;
+		public static int játékban_lévők_száma;
+
 
 		// string-reprezentáció debughoz
 		public override string ToString() => this.nev;
@@ -55,14 +57,14 @@ namespace multi_teszt
 			this.kész = false;
 			this.vár = false;
 
-			if (kezdő_robot == null)
-				kezdő_robot = this;
+			if (Robot.kezdő_robot == null)
+				Robot.kezdő_robot = this;
 
-			Végére_fűz();
+			this.Végére_fűz();
 
-			Console.WriteLine($"{nev} létrejött, és {meddig}-ig fog elszámolni.");
+			Console.WriteLine($"{this.nev} létrejött, és {this.meddig}-ig fog elszámolni.");
 		}
-		public Robot(string nev) : this(nev, r.Next(rmin, rmax)) {}
+		public Robot(string nev) : this(nev, r.Next(Robot.rmin, Robot.rmax)) {}
 
 		#region A lánc adatszerkezet metódusai
 
@@ -72,16 +74,22 @@ namespace multi_teszt
 			this.megelőzője = ez.megelőzője;
 			this.rákövetkezője.megelőzője = this;
 			this.megelőzője.rákövetkezője = this;
+			Robot.játékban_lévők_száma++;
 		}
 		/// <summary>
 		/// ha már csak egyelemű a lista, akkor hatástalan.
 		/// </summary>
 		public void Kifűz()
 		{
+			if (this == Robot.kezdő_robot)
+			{
+				Robot.kezdő_robot = rákövetkezője;
+			}
 			this.rákövetkezője.megelőzője = this.megelőzője;
 			this.megelőzője.rákövetkezője = this.rákövetkezője;
+			Robot.játékban_lévők_száma--;
 		}
-		public void Végére_fűz() => Beszúr_ez_elé(kezdő_robot);
+		public void Végére_fűz() => Beszúr_ez_elé(Robot.kezdő_robot);
 
 		#endregion
 
@@ -94,7 +102,9 @@ namespace multi_teszt
 			FELADAT();
 			kész = true;
 			Console.WriteLine($"{nev}: KÉSZEN VAGYOK! ({meddig}/{meddig}) Lépek.");
-			rákövetkezője.Te_jössz();
+			Robot ki_fog_jönni = rákövetkezője;
+			this.Kifűz();
+			ki_fog_jönni.Te_jössz();
 		}
 		/// <summary>
 		/// ez az, amit a user szerkeszt
@@ -108,10 +118,17 @@ namespace multi_teszt
 		}
 		void Csinál_valamit(int i)
 		{
-			Console.WriteLine($"=============== SZÜNET ================= {nev} körében");
-			Thread.Sleep(1000);
-			Console.WriteLine($"{nev} lép. ({i}/{meddig})");
-			Letelt_a_köröd();
+//			Console.WriteLine($"=============== SZÜNET ================= {nev} körében");
+			if (this==Robot.kezdő_robot)
+			{
+				Console.WriteLine($"===================\n Letelt egy nagykör!");
+			}
+			Thread.Sleep(500);
+			Console.WriteLine($"-------------------\n{nev} lép. ({i}/{meddig})");
+			if (1 < Robot.játékban_lévők_száma)
+			{
+				Letelt_a_köröd();
+			}
 		}
 
 		#endregion
@@ -181,9 +198,9 @@ namespace multi_teszt
 				Start_or_Resume();
 			}
 		}
-		void Letelt_a_köröd() 
+		void Letelt_a_köröd()
 		{
-			vár = true;
+			this.vár = true;
 			Console.WriteLine($"{nev}: várakozom, mindjárt felfüggesztem magam, de előbb szólok {rákövetkezője}-nek, hogy ő jön.");
 			rákövetkezője.Te_jössz();
 

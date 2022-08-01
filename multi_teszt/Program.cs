@@ -100,12 +100,18 @@ namespace multi_teszt
 		void FELADAT_BUROK()
 		{
 			FELADAT();
-			kész = true;
+			this.kész = true;
 			Console.WriteLine($"{nev}: KÉSZEN VAGYOK! ({meddig}/{meddig}) Lépek.");
+			this.Kiszállok();
+		}
+
+		private void Kiszállok()
+		{
 			Robot ki_fog_jönni = rákövetkezője;
 			this.Kifűz();
 			ki_fog_jönni.Te_jössz();
 		}
+
 		/// <summary>
 		/// ez az, amit a user szerkeszt
 		/// </summary>

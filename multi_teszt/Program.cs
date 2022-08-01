@@ -10,9 +10,9 @@ namespace multi_teszt
 	{
 		static void Main(string[] args)
 		{
-			Robot defaultkaresz = new Robot("DefaultKaresz");
-			Robot karesz = new Robot("Karesz");
-			Robot lilesz = new Robot("Lilesz");
+			Robot defaultkaresz = new Robot("DefaultKaresz", 3);
+			Robot karesz = new Robot("Karesz", 6);
+			Robot lilesz = new Robot("Lilesz", 8);
 
 			Console.WriteLine("-------------------------------------------------------");
 			Console.WriteLine($"JÁTÉKMESTER: elindítom a játékot");
@@ -46,11 +46,11 @@ namespace multi_teszt
 		static int counter = 0;
 
 		// konstruktor
-		public Robot(string nev)
+		public Robot(string nev, int meddig)
 		{
 			this.nev = nev;
 			this.thread = new Thread(new ThreadStart(FELADAT_BUROK));
-			this.meddig = r.Next(rmin,rmax);
+			this.meddig = meddig;
 			this.kész = false;
 			this.vár = false;
 
@@ -61,6 +61,7 @@ namespace multi_teszt
 
 			Console.WriteLine($"{nev} létrejött, és {meddig}-ig fog elszámolni.");
 		}
+		public Robot(string nev) : this(nev, r.Next(rmin, rmax)) {}
 
 		#region A lánc adatszerkezet metódusai
 

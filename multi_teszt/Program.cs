@@ -10,15 +10,41 @@ namespace multi_teszt
 	{
 		static void Main(string[] args)
 		{
-			Robot defaultkaresz = new Robot("DefaultKaresz", 1);
-			Robot karesz = new Robot("Karesz", 3);
-			Robot lilesz = new Robot("Lilesz", 6);
+			Robot karesz = new Robot("Karesz");
+			Robot lilesz = new Robot("Lilesz");
+			Robot miska = new Robot("Miska");
+
+			karesz.feladat = delegate () 
+			{
+				karesz.Csinál_valamit();
+			};
+
+			lilesz.feladat = delegate ()
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					lilesz.Csinál_valamit();
+				}
+			};
+
+			miska.feladat = delegate ()
+			{
+				for (int i = 0; i < 7; i++)
+				{
+					miska.Csinál_valamit();
+				}
+			};
+
 			Robot.timeout = 10;
 
 			Console.WriteLine("-------------------------------------------------------");
 			Console.WriteLine($"JÁTÉKMESTER: elindítom a játékot");
 
 			Robot.játék_elindítása();
+			Console.WriteLine("-------------------------------------------------------");
+			Console.WriteLine($"JÁTÉKMESTER: Vége a játéknak");
+			Console.ReadKey();
+
 		}
 	}
 
@@ -28,13 +54,13 @@ namespace multi_teszt
 		// instancia tulajdonságai
 		public string nev;
 		public Thread thread;
-		private int meddig;
 
 		public Robot rákövetkezője, megelőzője;
 		public bool kész;
 		public bool vár;
 		public static int játékban_lévők_száma;
 
+		public Action feladat;
 
 		// string-reprezentáció debughoz
 		public override string ToString() => this.nev;
@@ -42,6 +68,9 @@ namespace multi_teszt
 		// osztály tulajdonságai
 		public static Random r = new Random();
 		private static Robot kezdő_robot;
+
+		
+
 
 		static readonly int rmin = 3;
 		static readonly int rmax = 10;
@@ -51,11 +80,10 @@ namespace multi_teszt
 		static Dictionary<Robot, int> pálya = new Dictionary<Robot, int>(); 
 
 		// konstruktor
-		public Robot(string nev, int meddig)
+		public Robot(string nev)
 		{
 			this.nev = nev;
 			this.thread = new Thread(new ThreadStart(FELADAT_BUROK));
-			this.meddig = meddig;
 			this.kész = false;
 			this.vár = false;
 
@@ -66,9 +94,8 @@ namespace multi_teszt
 
 			pálya[this] = 0;
 
-			Console.WriteLine($"{this.nev} létrejött, és {this.meddig}-ig fog elszámolni.");
+			Console.WriteLine($"{this.nev} létrejött");
 		}
-		public Robot(string nev) : this(nev, r.Next(Robot.rmin, Robot.rmax)) {}
 
 		#region A lánc adatszerkezet metódusai
 
@@ -103,9 +130,9 @@ namespace multi_teszt
 		/// </summary>
 		void FELADAT_BUROK()
 		{
-			FELADAT();
+			this.feladat();
 			this.kész = true;
-			Console.WriteLine($"{nev}: KÉSZEN VAGYOK! ({meddig}/{meddig}) Lépek.");
+			Console.WriteLine($"{nev}: KÉSZEN VAGYOK!");
 			this.Kiszállok();
 		}
 
@@ -119,14 +146,8 @@ namespace multi_teszt
 		/// <summary>
 		/// ez az, amit a user szerkeszt
 		/// </summary>
-		void FELADAT()
-		{
-			for (int i = 0; i < meddig; i++)
-			{
-				Csinál_valamit(i); // ide jönnek az olyan parancsok, mint a tegyél le egy követ meg a lépj...
-			}
-		}
-		void Csinál_valamit(int i)
+		
+		public void Csinál_valamit()
 		{
 //			Console.WriteLine($"=============== SZÜNET ================= {nev} körében");
 			if (this==Robot.kezdő_robot)
@@ -135,7 +156,7 @@ namespace multi_teszt
 			}
 			Thread.Sleep(500);
 			pálya[this]++;
-			Console.WriteLine($"-------------------\n{nev} lép. ({i}/{meddig})");
+			Console.WriteLine($"-------------------\n{nev} lép.");
 			foreach (Robot r in pálya.Keys)
 			{
 				Console.ForegroundColor = ConsoleColor.Red;
@@ -226,7 +247,9 @@ namespace multi_teszt
 			this.thread.Suspend();
 
 			// valójában itt kezdődnek a körök!
+			Console.WriteLine($"{nev}: Elindítottak.");
 			Thread.Sleep(100); // Ez arra kell, hogy amikor megkapja a körét, akkor hagyjon egy kis időt az előzőnek, hogy felfüggessze magát. 
+
 		}
 		void Start_or_Resume()
 		{

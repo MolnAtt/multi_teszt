@@ -48,6 +48,8 @@ namespace multi_teszt
 		public static int timeout;
 		static int counter = 0;
 
+		static Dictionary<Robot, int> pálya = new Dictionary<Robot, int>(); 
+
 		// konstruktor
 		public Robot(string nev, int meddig)
 		{
@@ -61,6 +63,8 @@ namespace multi_teszt
 				Robot.kezdő_robot = this;
 
 			this.Végére_fűz();
+
+			pálya[this] = 0;
 
 			Console.WriteLine($"{this.nev} létrejött, és {this.meddig}-ig fog elszámolni.");
 		}
@@ -130,7 +134,15 @@ namespace multi_teszt
 				Console.WriteLine($"===================\n Letelt egy nagykör!");
 			}
 			Thread.Sleep(500);
+			pálya[this]++;
 			Console.WriteLine($"-------------------\n{nev} lép. ({i}/{meddig})");
+			foreach (Robot r in pálya.Keys)
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.Write($"{r.nev}: {pálya[r]}\t");
+				Console.ForegroundColor = ConsoleColor.White;
+			}
+			Console.WriteLine();
 			if (1 < Robot.játékban_lévők_száma)
 			{
 				Letelt_a_köröd();
